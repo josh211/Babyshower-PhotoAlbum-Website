@@ -1,0 +1,14 @@
+# Secrets
+.env
+
+# Lychee runtime data (photos, DB, logs) — lives only on the host machine
+lychee/conf/*
+lychee/uploads/*
+lychee/sym/*
+lychee/logs/*
+lychee/tmp/*
+!lychee/conf/.gitkeep
+!lychee/uploads/.gitkeep
+!lychee/sym/.gitkeep
+!lychee/logs/.gitkeep
+!lychee/tmp/.gitkeep

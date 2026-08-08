@@ -1,0 +1,118 @@
+#-------------------------------------------
+# Baby Shower Photo Album — powered by Lychee
+# https://github.com/LycheeOrg/Lychee
+#-------------------------------------------
+
+services:
+  lychee_cache:
+    image: redis:alpine
+    container_name: babyshower_redis
+    hostname: babyshower_redis
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping || exit 1"]
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      - TZ=${TIMEZONE:-UTC}
+    networks:
+      - lychee
+    volumes:
+      - cache:/data:rw
+    restart: on-failure:5
+
+  lychee_db:
+    container_name: babyshower_db
+    image: mariadb:10
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-rootpassword}
+      - MYSQL_DATABASE=${DB_DATABASE:-lychee}
+      - MYSQL_USER=${DB_USERNAME:-lychee}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    expose:
+      - 3306
+    volumes:
+      - mysql:/var/lib/mysql
+    networks:
+      - lychee
+    restart: unless-stopped
+
+  lychee:
+    image: lycheeorg/lychee
+    container_name: babyshower_lychee
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - ${LYCHEE_PORT:-90}:80
+    volumes:
+      - ./lychee/conf:/conf
+      - ./lychee/uploads:/uploads
+      - ./lychee/sym:/sym
+      - ./lychee/logs:/logs
+      - ./lychee/tmp:/lychee-tmp
+    env_file:
+      - path: ./.env
+        required: false
+    networks:
+      - lychee
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - PHP_TZ=${TIMEZONE:-UTC}
+      - TIMEZONE=${TIMEZONE:-UTC}
+      - APP_URL=${APP_URL:-http://localhost:90}
+      - DB_CONNECTION=mysql
+      - DB_HOST=lychee_db
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_DATABASE=${DB_DATABASE:-lychee}
+      - DB_USERNAME=${DB_USERNAME:-lychee}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - SKIP_PERMISSIONS_CHECKS=${SKIP_PERMISSIONS_CHECKS:-false}
+      - STARTUP_DELAY=30
+      - CACHE_DRIVER=${CACHE_DRIVER:-redis}
+      - REDIS_URL=redis://${REDIS_USERNAME:-default}:${REDIS_PASSWORD:-}@${REDIS_HOST:-lychee_redis}:${REDIS_PORT:-6379}
+      - REDIS_HOST=${REDIS_HOST:-babyshower_redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - LOG_VIEWER_CACHE_DRIVER=${LOG_VIEWER_CACHE_DRIVER:-file}
+      - VITE_HTTP_PROXY_ENABLED=${VITE_HTTP_PROXY_ENABLED:-false}
+      - DISABLE_BASIC_AUTH=${DISABLE_BASIC_AUTH:-false}
+      - DISABLE_WEBAUTHN=${DISABLE_WEBAUTHN:-false}
+    restart: unless-stopped
+    depends_on:
+      - lychee_db
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: babyshower_tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - lychee
+    depends_on:
+      - lychee
+    profiles:
+      - tunnel
+
+networks:
+  lychee:
+
+volumes:
+  mysql:
+    name: babyshower_mysql
+    driver: local
+  cache:
+    name: babyshower_redis
+    driver: local
