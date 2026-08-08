@@ -61,6 +61,21 @@ docker compose --profile tunnel up -d cloudflared
 
 Cloudflare will start routing `https://photos.yourdomain.com` (or whatever subdomain you chose) straight to Lychee running on this machine, over an outbound-only encrypted connection — nothing needs to be port-forwarded.
 
+## 5. Let guests upload their own photos
+
+This is a built-in Lychee feature — no extra setup beyond flipping a few switches on the album:
+
+1. Open the **"Baby Shower 2026"** album → **Settings** (gear icon).
+2. Under **Sharing**:
+   - Set the album to **Public**, so people can open the link without an account.
+   - Optionally add a **Password** if you only want it visible to people who attended.
+3. Under **Permissions** (may be labeled **Album Rights** depending on version):
+   - Enable **Guest Upload** (sometimes shown as "Grants" → "Upload") — this lets visitors add their own photos to the album without logging in.
+   - Leave editing/deleting off so guests can add photos but can't remove anyone else's.
+4. Save, then share the link (`https://photos.yourdomain.com`). Anyone with it can now open the album on their phone and upload their own baby shower pictures straight into the same gallery as yours.
+
+Photos guests upload land in your `./lychee/uploads` folder just like your own — you can review, caption, reorder, or remove any of them at any time from the admin view.
+
 ## Everyday use
 
 - Start everything (e.g. after a reboot):
@@ -78,12 +93,9 @@ Cloudflare will start routing `https://photos.yourdomain.com` (or whatever subdo
   ```
 - Your photos and database live in `./lychee/` on this machine — back that folder up periodically.
 
-## Sharing with guests
+## Other sharing options
 
-Once the tunnel is up, just send people the link (`https://photos.yourdomain.com`). In Lychee you can:
-- Make an album **public** (viewable without login) so guests can browse without an account.
-- Optionally set a **password** on the album for a bit of privacy.
+All on the album's **Settings** page in Lychee:
 - Enable **downloads** if you want guests to be able to save full-resolution photos.
-- Turn on guest **uploads** for an album if you want attendees to add their own photos from the shower.
-
-These are all toggles on the album's settings page in Lychee.
+- Show/hide the **owner name** on uploaded photos.
+- Set a **link expiration date** if you only want the album live for a limited time.
